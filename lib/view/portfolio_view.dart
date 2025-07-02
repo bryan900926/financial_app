@@ -1,4 +1,8 @@
+import 'dart:developer';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:news_app/auth_service/firebase.dart';
 import 'package:news_app/charts/portfolio_charts.dart';
 import 'package:news_app/database/portfolio_db.dart';
 import 'package:news_app/dialogs/add_stock_dialog.dart';
@@ -20,6 +24,7 @@ class _PortfolioViewState extends State<PortfolioView> {
   final portfolio_Db_Helper = PortfolioDbHelper.instance;
   late PortfolioStatus portfolio = PortfolioStatus(holdings: [], totalValue: 0);
   bool _isLoading = true;
+  final User? currentUser = FirebaseAuthService().currentUser;
 
   @override
   void initState() {
@@ -32,7 +37,7 @@ class _PortfolioViewState extends State<PortfolioView> {
     setState(() {
       _isLoading = true;
     });
-    final holdingsFromDb = await portfolio_Db_Helper.getAllHoldings();
+    final holdingsFromDb = await portfolio_Db_Helper.getAllHoldings(currentUser!.email!);
     if (holdingsFromDb.isEmpty) {
       if (!mounted) return;
       setState(() {
@@ -72,11 +77,11 @@ class _PortfolioViewState extends State<PortfolioView> {
             companyName: existing.companyName,
             shares: existing.shares + newHolding.shares,
           );
-          portfolio_Db_Helper.updateStock(existing);
+          portfolio_Db_Helper.updateStock(existing, currentUser!.email!);
         } else {
           // Otherwise, add the new stock to the list
           portfolio.holdings.add(newHolding);
-          portfolio_Db_Helper.insertStock(newHolding);
+          portfolio_Db_Helper.insertStock(newHolding, currentUser!.email!);
         }
       });
       // Refresh all prices and update the UI
@@ -91,7 +96,6 @@ class _PortfolioViewState extends State<PortfolioView> {
       symbol: '\$',
     );
     return Scaffold(
-      appBar: AppBar(title: const Text('My Portfolio')),
       floatingActionButton: FloatingActionButton(
         onPressed: _handleAddStock,
         tooltip: 'Add Stock',
@@ -183,7 +187,7 @@ class _PortfolioViewState extends State<PortfolioView> {
                           return res ?? false;
                         },
                         onDismissed: (direction) async {
-                          await portfolio_Db_Helper.deleteStock(holding.symbol);
+                          await portfolio_Db_Helper.deleteStock(holding.symbol, currentUser!.email!);
                           _updatePortfolioData();
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(

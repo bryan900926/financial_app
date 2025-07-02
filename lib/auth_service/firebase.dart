@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class FirebaseAuthService {
@@ -6,6 +5,7 @@ class FirebaseAuthService {
 
   // Stream to listen for authentication changes
   Stream<User?> get authStateChanges => _auth.authStateChanges();
+  User? get currentUser => _auth.currentUser;
 
   // Sign in with email and password
   Future<User?> signInWithEmailAndPassword(
@@ -19,7 +19,7 @@ class FirebaseAuthService {
       );
       return result.user;
     } catch (e) {
-      log(e.toString());
+      // log(e.toString());
       return null;
     }
   }
@@ -43,5 +43,13 @@ class FirebaseAuthService {
   // Sign out
   Future<void> signOut() async {
     await _auth.signOut();
+  }
+
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      throw e;
+    }
   }
 }

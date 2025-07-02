@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:news_app/settings/setting_view.dart';
 import 'package:news_app/view/news_view.dart';
 import 'package:news_app/view/portfolio_view.dart';
 
@@ -17,8 +18,8 @@ class _HomeViewState extends State<HomeView> {
   static const List<Widget> _widgetOptions = <Widget>[
     PortfolioView(), // A new portfolio page you would create
     NewsView(), // Your existing news page
+    SettingsView(),
   ];
-
   // Function to handle tap events on the navigation bar
   void _onItemTapped(int index) {
     setState(() {
@@ -30,9 +31,7 @@ class _HomeViewState extends State<HomeView> {
   Widget build(BuildContext context) {
     return Scaffold(
       // The body of the Scaffold is the currently selected view
-      body: Center(
-        child: _widgetOptions.elementAt(_selectedIndex),
-      ),
+      body: Center(child: _widgetOptions.elementAt(_selectedIndex)),
       // The BottomNavigationBar
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
@@ -40,9 +39,10 @@ class _HomeViewState extends State<HomeView> {
             icon: Icon(Icons.business),
             label: 'Portfolio',
           ),
+          BottomNavigationBarItem(icon: Icon(Icons.article), label: 'News'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.article),
-            label: 'News',
+            icon: Icon(Icons.settings),
+            label: "Settings",
           ),
         ],
         currentIndex: _selectedIndex,

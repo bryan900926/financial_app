@@ -39,11 +39,12 @@ class PortfolioDbHelper {
   // --- CRUD (Create, Read, Update, Delete) Methods ---
 
   // Adds a new stock holding to the database.
-  Future<void> insertStock(StockHolding holding) async {
+  Future<void> insertStock(StockHolding holding, String userEmail) async {
     final db = await instance.database;
     await db.insert(
       portfolioDb,
       {
+        'user_email': userEmail,
         'symbol': holding.symbol,
         'companyName': holding.companyName,
         'shares': holding.shares,
@@ -54,20 +55,24 @@ class PortfolioDbHelper {
   }
 
   // Updates an existing stock holding's shares.
-  Future<void> updateStock(StockHolding holding) async {
+  Future<void> updateStock(StockHolding holding, String userEmail) async {
     final db = await instance.database;
-    await db.update(
-      portfolioDb,
-      {'shares': holding.shares},
-      where: 'symbol = ?',
-      whereArgs: [holding.symbol],
-    );
+    await db.update(portfolioDb, {
+      'user_email': userEmail,
+      'symbol': holding.symbol,
+      'companyName': holding.companyName,
+      'shares': holding.shares,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   // Retrieves all stock holdings from the database.
-  Future<List<StockHolding>> getAllHoldings() async {
+  Future<List<StockHolding>> getAllHoldings(String userEmail) async {
     final db = await instance.database;
-    final maps = await db.query(portfolioDb);
+    final maps = await db.query(
+      portfolioDb,
+      where: "user_email = ?",
+      whereArgs: [userEmail],
+    );
 
     // Convert the List<Map<String, dynamic>> into a List<StockHolding>.
     return List.generate(maps.length, (i) {
@@ -79,17 +84,24 @@ class PortfolioDbHelper {
     });
   }
 
-  Future<void> deleteStock(String symbol) async {
+  Future<void> deleteStock(String symbol, String userEmail) async {
     final db = await instance.database;
-    await db.delete(portfolioDb, where: 'symbol = ?', whereArgs: [symbol]);
+    await db.delete(
+      portfolioDb,
+      where: 'symbol = ? AND user_email = ?',
+      whereArgs: [symbol, userEmail],
+    );
   }
 }
 
 const createPortfolioTable = '''
-      CREATE TABLE holdings (
-        symbol TEXT PRIMARY KEY,
+      CREATE TABLE IF NOT EXISTS $portfolioDb (
+        user_email TEXT NOT NULL,
+        symbol TEXT NOT NULL,
         companyName TEXT NOT NULL,
-        shares INTEGER NOT NULL
+        shares INTEGER NOT NULL,
+        PRIMARY KEY (symbol, user_email)
       )
     ''';
-const portfolioDb = "holdings";
+
+const portfolioDb = "portfolio";
