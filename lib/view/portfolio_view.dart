@@ -1,8 +1,5 @@
 import 'dart:developer';
-
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:news_app/auth_service/firebase.dart';
 import 'package:news_app/charts/portfolio_charts.dart';
 import 'package:news_app/database/portfolio_db.dart';
 import 'package:news_app/dialogs/add_stock_dialog.dart';
@@ -11,6 +8,8 @@ import 'package:news_app/portfolio_service/add_portfolio.dart';
 import 'dart:async';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:news_app/services/auth/auth_user.dart';
+import 'package:news_app/services/auth_service.dart';
 import 'package:news_app/view/stock_detail_view.dart';
 
 class PortfolioView extends StatefulWidget {
@@ -21,10 +20,10 @@ class PortfolioView extends StatefulWidget {
 }
 
 class _PortfolioViewState extends State<PortfolioView> {
-  final portfolio_Db_Helper = PortfolioDbHelper.instance;
+  final portfolioDbHelper = PortfolioDbHelper.instance;
   late PortfolioStatus portfolio = PortfolioStatus(holdings: [], totalValue: 0);
   bool _isLoading = true;
-  final User? currentUser = FirebaseAuthService().currentUser;
+  final AuthUser? currentUser = AuthService.firebase().currentUser;
 
   @override
   void initState() {
@@ -33,11 +32,12 @@ class _PortfolioViewState extends State<PortfolioView> {
   }
 
   Future<void> _updatePortfolioData() async {
+    // await portfolioDbHelper.printPortfolioDb();
     if (!mounted) return;
     setState(() {
       _isLoading = true;
     });
-    final holdingsFromDb = await portfolio_Db_Helper.getAllHoldings(currentUser!.email!);
+    final holdingsFromDb = await portfolioDbHelper.getAllHoldings(currentUser!.email);
     if (holdingsFromDb.isEmpty) {
       if (!mounted) return;
       setState(() {
@@ -61,27 +61,25 @@ class _PortfolioViewState extends State<PortfolioView> {
   Future<void> _handleAddStock() async {
     // Await the result from the dialog. It will be a StockHolding or null.
     final newHolding = await showAddStockDialog(context);
-
+    // log(newHolding.toString());
     // If the user added a stock (result is not null)
     if (newHolding != null) {
       setState(() {
         final existingHoldingIndex = portfolio.holdings.indexWhere(
           (h) => h.symbol == newHolding.symbol,
         );
-
+        // log("existing index : $existingHoldingIndex");
         if (existingHoldingIndex != -1) {
           // If the stock already exists, update the share count
-          final existing = portfolio.holdings[existingHoldingIndex];
-          portfolio.holdings[existingHoldingIndex] = StockHolding(
-            symbol: existing.symbol,
-            companyName: existing.companyName,
-            shares: existing.shares + newHolding.shares,
-          );
-          portfolio_Db_Helper.updateStock(existing, currentUser!.email!);
+          StockHolding existing = portfolio.holdings[existingHoldingIndex];
+          // log("existing portfolio: shares: ${existing.shares}");
+          existing.companyName = newHolding.companyName;
+          existing.shares = newHolding.shares;
+          // log("existing portfolio: shares: ${portfolio.holdings[existingHoldingIndex].shares}");
+          portfolioDbHelper.updateStock(existing, currentUser!.email);
         } else {
-          // Otherwise, add the new stock to the list
           portfolio.holdings.add(newHolding);
-          portfolio_Db_Helper.insertStock(newHolding, currentUser!.email!);
+          portfolioDbHelper.insertStock(newHolding, currentUser!.email);
         }
       });
       // Refresh all prices and update the UI
@@ -187,7 +185,7 @@ class _PortfolioViewState extends State<PortfolioView> {
                           return res ?? false;
                         },
                         onDismissed: (direction) async {
-                          await portfolio_Db_Helper.deleteStock(holding.symbol, currentUser!.email!);
+                          await portfolioDbHelper.deleteStock(holding.symbol, currentUser!.email);
                           _updatePortfolioData();
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(

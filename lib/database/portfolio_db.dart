@@ -57,12 +57,18 @@ class PortfolioDbHelper {
   // Updates an existing stock holding's shares.
   Future<void> updateStock(StockHolding holding, String userEmail) async {
     final db = await instance.database;
-    await db.update(portfolioDb, {
-      'user_email': userEmail,
-      'symbol': holding.symbol,
-      'companyName': holding.companyName,
-      'shares': holding.shares,
-    }, conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.update(
+      portfolioDb,
+      {
+        'user_email': userEmail,
+        'symbol': holding.symbol,
+        'companyName': holding.companyName,
+        'shares': holding.shares,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+      where: 'user_email = ? AND symbol = ?',
+      whereArgs: [userEmail, holding.symbol],
+    );
   }
 
   // Retrieves all stock holdings from the database.
@@ -92,9 +98,18 @@ class PortfolioDbHelper {
       whereArgs: [symbol, userEmail],
     );
   }
+
+  Future<void> printPortfolioDb() async {
+    final db = await instance.database;
+    final rows = await db.query(portfolioDb);
+    for (var row in rows) {
+      print(row);
+    }
+  }
 }
 
-const createPortfolioTable = '''
+const createPortfolioTable =
+    '''
       CREATE TABLE IF NOT EXISTS $portfolioDb (
         user_email TEXT NOT NULL,
         symbol TEXT NOT NULL,

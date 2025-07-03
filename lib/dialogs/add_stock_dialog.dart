@@ -7,11 +7,11 @@ import 'dart:convert';
 Future<StockHolding?> showAddStockDialog(BuildContext context) async {
   final symbolController = TextEditingController();
   final sharesController = TextEditingController();
+  final ValueNotifier<String?> errorNotifier = ValueNotifier(null);
 
-  // The dialog now returns a Future that resolves to a StockHolding or null.
   return showDialog<StockHolding>(
     context: context,
-    barrierDismissible: false, // User must tap a button to close.
+    barrierDismissible: false,
     builder: (BuildContext dialogContext) {
       return AlertDialog(
         title: const Text('Add Stock to Portfolio'),
@@ -33,13 +33,26 @@ Future<StockHolding?> showAddStockDialog(BuildContext context) async {
                 hintText: "Enter number of shares",
               ),
             ),
+            const SizedBox(height: 8),
+            // Use ValueListenableBuilder instead of setState
+            ValueListenableBuilder<String?>(
+              valueListenable: errorNotifier,
+              builder: (_, error, __) => error == null
+                  ? const SizedBox.shrink()
+                  : Text(
+                      error,
+                      style: const TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+            ),
           ],
         ),
         actions: <Widget>[
           TextButton(
             child: const Text('Cancel'),
-            // When "Cancel" is pressed, pop the dialog and return null.
-            onPressed: () => Navigator.of(dialogContext).pop(null),
+            onPressed: () {
+              Navigator.of(dialogContext).pop(null);
+            },
           ),
           TextButton(
             child: const Text('Add'),
@@ -48,40 +61,35 @@ Future<StockHolding?> showAddStockDialog(BuildContext context) async {
               final shares = int.tryParse(sharesController.text.trim());
 
               if (symbol.isEmpty || shares == null || shares <= 0) {
-                // Here you could show an inline error, but for now we just prevent adding.
+                errorNotifier.value = "Please enter a valid symbol or shares.";
                 return;
               }
-              
+
               try {
                 final searchUrl =
                     'https://financialmodelingprep.com/api/v3/search?query=$symbol&limit=1&apikey=$apiPriceKey';
-                final searchResponse = await http.get(Uri.parse(searchUrl));
+                final response = await http.get(Uri.parse(searchUrl));
 
-                if (searchResponse.statusCode == 200) {
-                  final List<dynamic> searchData =
-                      json.decode(searchResponse.body);
-                  if (searchData.isNotEmpty && searchData[0]['symbol'] == symbol) {
-                    final companyName =
-                        searchData[0]['name'] ?? 'Unknown Company';
-                    
+                if (response.statusCode == 200) {
+                  final List<dynamic> data = jsonDecode(response.body);
+                  if (data.isNotEmpty && data[0]['symbol'] == symbol) {
+                    final companyName = data[0]['name'] ?? 'Unknown Company';
+
                     final newHolding = StockHolding(
                       symbol: symbol,
                       companyName: companyName,
                       shares: shares,
                     );
-                    
-                    // When successful, pop the dialog and return the new holding.
-                    return Navigator.of(dialogContext).pop(newHolding);
 
+                    Navigator.of(dialogContext).pop(newHolding);
                   } else {
-                    // Ticker not found, pop and return null.
-                    Navigator.of(dialogContext).pop(null);
-                    // You could also show another error dialog here if you prefer.
+                    errorNotifier.value = "Ticker not found.";
                   }
+                } else {
+                  errorNotifier.value = "Network error occurred.";
                 }
               } catch (e) {
-                // Network error, pop and return null.
-                Navigator.of(dialogContext).pop(null);
+                errorNotifier.value = "Something went wrong.";
               }
             },
           ),
@@ -90,3 +98,4 @@ Future<StockHolding?> showAddStockDialog(BuildContext context) async {
     },
   );
 }
+

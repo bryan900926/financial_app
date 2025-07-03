@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:news_app/api_key/api.dart';
 
 class StockHolding {
-  final String symbol;
-  final int shares;
+  String symbol;
+  int shares;
   double currentPrice;
   double get totalValue => shares * currentPrice;
   String companyName;

@@ -1,7 +1,9 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:news_app/consts/routes.dart';
 import 'package:news_app/firebase_options.dart';
-import 'package:news_app/view/login_view.dart';
+import 'package:news_app/view/home_view.dart';
+import 'package:news_app/view/login_view_v2.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,7 +24,11 @@ class NewsApp extends StatelessWidget {
         primarySwatch: Colors.indigo, 
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: const LoginView(),
+      home: const LoginViewV2(),
+      routes: {
+        loginRoute: (context) => const LoginViewV2(),
+        homeRoute: (context) => const HomeView()
+      },
     );
   }
 }

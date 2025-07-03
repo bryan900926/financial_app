@@ -1,2 +1,2 @@
-const newsViewRoute = "/news_view/"; 
-const portfolioViewRoute = "/portfolio_view/";
+const loginRoute = "/login_view/";
+const homeRoute = "/home_view/"; 

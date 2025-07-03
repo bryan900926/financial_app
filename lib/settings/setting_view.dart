@@ -1,19 +1,18 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:news_app/auth_service/firebase.dart';
+import 'package:news_app/consts/routes.dart';
 import 'package:news_app/dialogs/error_dialogs.dart';
-import 'package:news_app/view/login_view.dart';
+import 'package:news_app/services/auth_service.dart';
 
 class SettingsView extends StatelessWidget {
   const SettingsView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final FirebaseAuthService authService = FirebaseAuthService();
-    final User? user = authService.currentUser;
+    final authService = AuthService.firebase();
+    final user = authService.currentUser;
 
     return Scaffold(
-      appBar: AppBar(title: Text("Settings")),
+      appBar: AppBar(title: const Text("Settings")),
       body: ListView(
         children: <Widget>[
           ListTile(
@@ -29,7 +28,7 @@ class SettingsView extends StatelessWidget {
             onTap: () async {
               if (user?.email != null) {
                 try {
-                  await authService.sendPasswordResetEmail(user!.email!);
+                  await authService.sendPasswordChange(email: user!.email);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Password reset email sent!'),
@@ -49,8 +48,8 @@ class SettingsView extends StatelessWidget {
           ),
           const Divider(),
           ListTile(
-            leading: Icon(Icons.contact_mail),
-            title: Text('About us'),
+            leading: const Icon(Icons.contact_mail),
+            title: const Text('About us'),
             onTap: () async {
               showGenericDialog(
                 context: context,
@@ -63,13 +62,15 @@ class SettingsView extends StatelessWidget {
           const Divider(),
           ListTile(
             leading: Icon(Icons.logout, color: Colors.red.shade400),
-            title: Text('Logout', style: TextStyle(color: Colors.red.shade400)),
+            title: Text(
+              'Logout',
+              style: TextStyle(color: Colors.red.shade400),
+            ),
             onTap: () async {
-              await authService.signOut();
-              // Navigate back to the login screen and remove all previous routes
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const LoginView()),
-                (Route<dynamic> route) => false,
+              await authService.logOut();
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                loginRoute,
+                (route) => false,
               );
             },
           ),
