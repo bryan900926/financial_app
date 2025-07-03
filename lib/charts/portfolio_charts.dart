@@ -1,6 +1,6 @@
   import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:news_app/portfolio_service/add_portfolio.dart';
+import 'package:news_app/services/portfolio/porfolio_status.dart';
 
 List<PieChartSectionData> generatePieChartSections(PortfolioStatus portfolio) {
     if (portfolio.totalValue == 0) {

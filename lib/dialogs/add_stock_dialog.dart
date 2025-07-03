@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:news_app/api_key/api.dart';
-import 'package:news_app/portfolio_service/add_portfolio.dart';
+import 'package:news_app/services/portfolio/porfolio_status.dart';
 import 'dart:convert';
 
 Future<StockHolding?> showAddStockDialog(BuildContext context) async {
@@ -74,8 +74,10 @@ Future<StockHolding?> showAddStockDialog(BuildContext context) async {
                   final List<dynamic> data = jsonDecode(response.body);
                   if (data.isNotEmpty && data[0]['symbol'] == symbol) {
                     final companyName = data[0]['name'] ?? 'Unknown Company';
+                    final price = data[0]['price'];
 
                     final newHolding = StockHolding(
+                      currentPrice: price,
                       symbol: symbol,
                       companyName: companyName,
                       shares: shares,

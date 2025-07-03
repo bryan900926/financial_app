@@ -1,4 +1,4 @@
-import 'package:news_app/portfolio_service/add_portfolio.dart';
+import 'package:news_app/services/portfolio/porfolio_status.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
