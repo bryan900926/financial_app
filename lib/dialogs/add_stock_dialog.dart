@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:news_app/api_key/api.dart';
 import 'package:news_app/services/portfolio/porfolio_status.dart';
 import 'dart:convert';
+import 'dart:developer';
 
 Future<StockHolding?> showAddStockDialog(BuildContext context) async {
   final symbolController = TextEditingController();
@@ -67,15 +68,14 @@ Future<StockHolding?> showAddStockDialog(BuildContext context) async {
 
               try {
                 final searchUrl =
-                    'https://financialmodelingprep.com/api/v3/search?query=$symbol&limit=1&apikey=$apiPriceKey';
+                    'https://financialmodelingprep.com/api/v3/quote/$symbol?apikey=$apiPriceKey';
                 final response = await http.get(Uri.parse(searchUrl));
 
                 if (response.statusCode == 200) {
                   final List<dynamic> data = jsonDecode(response.body);
                   if (data.isNotEmpty && data[0]['symbol'] == symbol) {
                     final companyName = data[0]['name'] ?? 'Unknown Company';
-                    final price = data[0]['price'];
-
+                    final price = (data[0]['price'] as num?)?.toDouble() ?? 0.0;
                     final newHolding = StockHolding(
                       currentPrice: price,
                       symbol: symbol,

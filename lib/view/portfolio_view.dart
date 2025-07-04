@@ -21,18 +21,29 @@ class PortfolioView extends StatefulWidget {
 
 class _PortfolioViewState extends State<PortfolioView> {
   final portfolioDbHelper = PortfolioDbHelper.instance;
-  late ValueNotifier<PortfolioStatus> portfolioNotifier;
+  late ValueNotifier<PortfolioStatus> portfolioNotifier = ValueNotifier(
+    PortfolioStatus.fmp(),
+  );
   final AuthUser? currentUser = AuthService.firebase().currentUser;
 
   @override
   void initState() {
     super.initState();
-    portfolioNotifier = ValueNotifier(PortfolioStatus(totalValue: 0.0));
     _initializePortfolio();
   }
 
   Future<void> _initializePortfolio() async {
-    portfolioNotifier.value = await PortfolioStatus.fromDb(currentUser!.email);
+    portfolioNotifier.value.holdings = await portfolioDbHelper.getAllHoldings(
+      currentUser!.email,
+    );
+    await portfolioNotifier.value.updatePortfolioData();
+
+    portfolioNotifier.value = PortfolioStatus(
+      totalValue: portfolioNotifier.value.totalValue,
+      provider: portfolioNotifier.value.provider,
+      holdings: portfolioNotifier.value.holdings,
+      errorMessage: portfolioNotifier.value.errorMessage,
+    );
   }
 
   @override
@@ -56,8 +67,12 @@ class _PortfolioViewState extends State<PortfolioView> {
               existing.currentPrice = newHolding.currentPrice;
               await portfolioDbHelper.updateStock(existing, currentUser!.email);
             } else {
-              await portfolioDbHelper.insertStock(newHolding, currentUser!.email);
+              await portfolioDbHelper.insertStock(
+                newHolding,
+                currentUser!.email,
+              );
             }
+            _initializePortfolio();
           }
         },
         tooltip: 'Add Stock',
