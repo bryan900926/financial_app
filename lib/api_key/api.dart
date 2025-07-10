@@ -1,4 +1,4 @@
-const apiPriceKey = "ZP707lVgq0tFGJXmqTI69VvOml5sUKh3"; 
+const apiPriceKey = "plag4Px6TQMGz8GMfEoX0eiuBC6nbhhA"; 
 const apiNewsKey = 'd66108140f134d7e810851694560aaf2';
 
 String apiNoSearch({required int currentPage, required String apiKey}) =>

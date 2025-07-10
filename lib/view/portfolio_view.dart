@@ -1,6 +1,5 @@
-import 'dart:developer';
 import 'package:flutter/material.dart';
-import 'package:news_app/charts/portfolio_charts.dart';
+import 'package:news_app/charts/portfolio_pie_charts.dart';
 import 'package:news_app/database/portfolio_db.dart';
 import 'package:news_app/dialogs/add_stock_dialog.dart';
 import 'package:news_app/dialogs/show_delete_dialog.dart';
@@ -37,7 +36,12 @@ class _PortfolioViewState extends State<PortfolioView> {
       currentUser!.email,
     );
     await portfolioNotifier.value.updatePortfolioData();
-
+    if (portfolioNotifier.value.holdings.isEmpty){
+      portfolioNotifier.value.errorMessage = "Please construct your portfolio with plus bottom at down right side";
+    }
+    else {
+      portfolioNotifier.value.errorMessage = null;
+    }
     portfolioNotifier.value = PortfolioStatus(
       totalValue: portfolioNotifier.value.totalValue,
       provider: portfolioNotifier.value.provider,
@@ -57,21 +61,8 @@ class _PortfolioViewState extends State<PortfolioView> {
         onPressed: () async {
           final newHolding = await showAddStockDialog(context);
           if (newHolding != null) {
-            final existingHoldingIndex = portfolioNotifier.value.holdings
-                .indexWhere((h) => h.symbol == newHolding.symbol);
-            if (existingHoldingIndex != -1) {
-              StockHolding existing =
-                  portfolioNotifier.value.holdings[existingHoldingIndex];
-              existing.companyName = newHolding.companyName;
-              existing.shares = newHolding.shares;
-              existing.currentPrice = newHolding.currentPrice;
-              await portfolioDbHelper.updateStock(existing, currentUser!.email);
-            } else {
-              await portfolioDbHelper.insertStock(
-                newHolding,
-                currentUser!.email,
-              );
-            }
+            await portfolioDbHelper.insertStock(newHolding, currentUser!.email);
+
             _initializePortfolio();
           }
         },
@@ -152,8 +143,8 @@ class _PortfolioViewState extends State<PortfolioView> {
                     final holding = portfolioNotifier.value.holdings[index];
                     return Dismissible(
                       key: Key(holding.symbol), // Unique key for each item
-                      direction: DismissDirection
-                          .endToStart, // Swipe from right to left
+                      direction:
+                          DismissDirection.down, // Swipe from right to left
                       background: Container(
                         color: Colors.red.shade400,
                         alignment: Alignment.centerRight,

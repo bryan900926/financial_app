@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:news_app/settings/setting_view.dart';
+import 'package:news_app/view/portfolio_view_v2.dart';
+import 'package:news_app/view/setting_view.dart';
 import 'package:news_app/view/news_view.dart';
-import 'package:news_app/view/portfolio_view.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -15,8 +15,8 @@ class _HomeViewState extends State<HomeView> {
   int _selectedIndex = 0;
 
   // List of the widgets (views) for each tab
-  static const List<Widget> _widgetOptions = <Widget>[
-    PortfolioView(), // A new portfolio page you would create
+  static final List<Widget> _widgetOptions = <Widget>[
+    PortfolioViewV2(), // A new portfolio page you would create
     NewsView(), // Your existing news page
     SettingsView(),
   ];

@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:news_app/services/portfolio/porfolio_status.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';

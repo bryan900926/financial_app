@@ -43,7 +43,6 @@ class _NewsViewState extends State<NewsView> {
   int _totalResults = 0;
   final ScrollController _scrollController = ScrollController();
 
-  // MODIFIED: Added state variables for search functionality
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   Timer? _debounce;
@@ -54,7 +53,6 @@ class _NewsViewState extends State<NewsView> {
     super.initState();
     _fetchNews();
     _scrollController.addListener(_onScroll);
-    // MODIFIED: Added listener to handle changes in the search field
     _searchController.addListener(_onSearchChanged);
   }
 
@@ -196,30 +194,6 @@ class _NewsViewState extends State<NewsView> {
     });
   }
 
-  // MODIFIED: Build the AppBar dynamically based on whether we are searching
-  AppBar _buildAppBar() {
-    return AppBar(
-      title: _isSearching
-          ? TextField(
-              controller: _searchController,
-              autofocus: true,
-              decoration: const InputDecoration(
-                hintText: 'Search news...',
-                hintStyle: TextStyle(color: Colors.black),
-                border: InputBorder.none,
-              ),
-              style: const TextStyle(color: Colors.black, fontSize: 18),
-            )
-          : const Text('Live Flutter News'),
-      actions: [
-        IconButton(
-          icon: Icon(_isSearching ? Icons.close : Icons.search),
-          onPressed: _toggleSearch,
-        ),
-      ],
-    );
-  }
-
   Widget _buildBody() {
     if (_isLoading && _articles.isEmpty) {
       return const Center(child: CircularProgressIndicator());
@@ -300,7 +274,10 @@ class _NewsViewState extends State<NewsView> {
               article.title,
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            subtitle: Text(formattedDate, style: const TextStyle(color: Colors.grey)),
+            subtitle: Text(
+              formattedDate,
+              style: const TextStyle(color: Colors.grey),
+            ),
             trailing: const Icon(Icons.open_in_new),
             onTap: () => _launchURL(article.url),
           ),
@@ -311,6 +288,28 @@ class _NewsViewState extends State<NewsView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: _buildAppBar(), body: _buildBody());
+    return Scaffold(
+      appBar: AppBar(
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  hintText: 'Search news...',
+                  hintStyle: TextStyle(color: Colors.black),
+                  border: InputBorder.none,
+                ),
+                style: const TextStyle(color: Colors.black, fontSize: 18),
+              )
+            : const Text('Live Flutter News'),
+        actions: [
+          IconButton(
+            icon: Icon(_isSearching ? Icons.close : Icons.search),
+            onPressed: _toggleSearch,
+          ),
+        ],
+      ),
+      body: _buildBody(),
+    );
   }
 }

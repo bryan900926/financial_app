@@ -1,20 +1,22 @@
-import 'dart:developer';
-
-import 'package:flutter/scheduler.dart';
 import 'package:news_app/api_key/api.dart';
 import 'package:news_app/database/portfolio_db.dart';
 import 'package:news_app/services/portfolio/fmp_portfolio_provider.dart';
-import 'package:news_app/services/portfolio/portfolio_provider.dart';
+import 'package:news_app/services/portfolio/price_retrevier.dart';
 
 // A result class to hold either the data or an error message.
 class PortfolioStatus {
   double totalValue;
-  PortfolioProvider provider;
+  PriceRetrevier provider;
   String? errorMessage;
   final portfolioDbHelper = PortfolioDbHelper.instance;
   List<StockHolding> holdings;
 
-  PortfolioStatus({required this.totalValue, required this.provider, required this.holdings, required this.errorMessage});
+  PortfolioStatus({
+    required this.totalValue,
+    required this.provider,
+    required this.holdings,
+    required this.errorMessage,
+  });
 
   factory PortfolioStatus.fmp() => PortfolioStatus(
     totalValue: 0,
@@ -23,20 +25,45 @@ class PortfolioStatus {
     errorMessage: null,
   );
 
-  Future<Map<String, double>> fetchPortfolioPrices() => provider.getData(
-    tickers: holdings.map((h) => h.symbol).toList(),
-    dataName: "price",
-  );
+  Future<StockHolding> addStockPriceToPortfolio({
+    required String ticker,
+    required int shares,
+  }) async {
+    try {
+      final info = await provider.getData(
+        holdings: [StockHolding(symbol: ticker, shares: shares)],
+        dataName: "price",
+      );
+      info[0].shares = shares;
+      return info[0];
+    } catch (_) {
+      rethrow;
+    }
+  }
+
+  Future<List<StockHolding>> fetchPortfolioPrices() =>
+      provider.getData(holdings: holdings, dataName: "price");
 
   Future<void> updatePortfolioData() async {
-    log(holdings.map((h) => h.symbol).toList().toString());
-    final infos = await fetchPortfolioPrices();
+    holdings = await fetchPortfolioPrices();
     totalValue = 0;
     for (var holding in holdings) {
-      final ticker = holding.symbol;
-      holding.currentPrice = infos[ticker] ?? 0.0;
       totalValue += holding.currentPrice * holding.shares;
     }
+  }
+
+  PortfolioStatus copyWith({
+    double? totalValue,
+    PriceRetrevier? provider,
+    String? errorMessage,
+    List<StockHolding>? holdings,
+  }) {
+    return PortfolioStatus(
+      totalValue: totalValue ?? this.totalValue,
+      provider: provider ?? this.provider,
+      holdings: holdings ?? this.holdings,
+      errorMessage: errorMessage,
+    );
   }
 }
 

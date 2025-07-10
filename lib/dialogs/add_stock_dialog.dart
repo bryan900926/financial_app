@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:news_app/api_key/api.dart';
 import 'package:news_app/services/portfolio/porfolio_status.dart';
-import 'dart:convert';
-import 'dart:developer';
+import 'package:news_app/services/portfolio/portfolio_exceptions.dart';
 
 Future<StockHolding?> showAddStockDialog(BuildContext context) async {
   final symbolController = TextEditingController();
@@ -61,36 +58,21 @@ Future<StockHolding?> showAddStockDialog(BuildContext context) async {
               final symbol = symbolController.text.trim().toUpperCase();
               final shares = int.tryParse(sharesController.text.trim());
 
-              if (symbol.isEmpty || shares == null || shares <= 0) {
+              if (symbol.isEmpty || shares == null || shares < 0) {
                 errorNotifier.value = "Please enter a valid symbol or shares.";
                 return;
               }
 
               try {
-                final searchUrl =
-                    'https://financialmodelingprep.com/api/v3/quote/$symbol?apikey=$apiPriceKey';
-                final response = await http.get(Uri.parse(searchUrl));
-
-                if (response.statusCode == 200) {
-                  final List<dynamic> data = jsonDecode(response.body);
-                  if (data.isNotEmpty && data[0]['symbol'] == symbol) {
-                    final companyName = data[0]['name'] ?? 'Unknown Company';
-                    final price = (data[0]['price'] as num?)?.toDouble() ?? 0.0;
-                    final newHolding = StockHolding(
-                      currentPrice: price,
-                      symbol: symbol,
-                      companyName: companyName,
-                      shares: shares,
-                    );
-
-                    Navigator.of(dialogContext).pop(newHolding);
-                  } else {
-                    errorNotifier.value = "Ticker not found.";
-                  }
-                } else {
-                  errorNotifier.value = "Network error occurred.";
-                }
-              } catch (e) {
+                final newHolding = await PortfolioStatus.fmp()
+                    .addStockPriceToPortfolio(ticker: symbol, shares: shares);
+                Navigator.of(dialogContext).pop(newHolding);
+              } on PortfolioProviderRequestFail catch (_) {
+                errorNotifier.value = "Network error occurred.";
+              } on UnableToFetchData catch (_) {
+                errorNotifier.value = "ticker data not found";
+              }
+              catch (e) {
                 errorNotifier.value = "Something went wrong.";
               }
             },
@@ -100,4 +82,3 @@ Future<StockHolding?> showAddStockDialog(BuildContext context) async {
     },
   );
 }
-
